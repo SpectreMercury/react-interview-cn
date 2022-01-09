@@ -247,3 +247,113 @@ handleClick = (id) => () => {
     console.log("Hello, your ticket number is", id)
 };
 ```
+
+### 16.什么React中的合成事件
+
+`SyntheticEvent`是React模拟原生DOM事件所有能力的一个事件对象，即浏览器原生事件的跨浏览器包装器。他的API和浏览器的原生事件相同，包含`stopPropagtion()`和`preventDefault()`，除了事件在所有浏览器中的工作方式相同
+
+
+### 17.什么是内联条件表达式
+
+你可以使用Javascript中支持渲染的if表达式或者三元表达式。除了这些外，你还可以在JSX中嵌入任何表达式，把他们包裹在`{}`中，之后你可以遵循Javascript的逻辑，使用`&&`等
+
+```
+<h1>Hello!</h1>
+{
+    messages.length > 0 && !isLogin?
+      <h2>
+          You have {messages.length} unread messages.
+      </h2>
+      :
+      <h2>
+          You don't have unread messages.
+      </h2>
+}
+```
+
+### 18. 什么是`key` prop，在使用数组渲染elements中，他有什么优势？
+在用数组创建elements的时候，`key`是一个特特殊的字符串属性。`Key` prop 帮助React识别哪个子元素发生了改变，添加或者移除。
+通常我们用`ID`当做`key`
+```
+const todoItems = todos.map((todo) =>
+  <li key={todo.id}>
+    {todo.text}
+  </li>
+)
+```
+当你没有稳定的`ID`来渲染子元素的时候，你可以用子元素的`index`来当做key作为最后的手段
+```
+const todoItems = todos.map((todo, index) =>
+  <li key={index}>
+    {todo.text}
+  </li>
+)shao
+```
+注意：
+
+- 如何子元素会变化的话，通常不推荐使用`Index`来当做`key`。因为这回对框架的渲染表现造成负面的影响，同时也会造成组件内`State`的问题
+
+- 如果组件是按照list来分割，更新的，那么把key应用到list的组件上，而不是用在`li`标签上
+
+- 如果在循环中没有`key`的话，在浏览器中会有warning出现
+
+### 19.refs在React中的作用？
+
+ref用来返回一个elements的reference。在多数情况下，他应该被避免使用，但当你想要直接访问一个DOM元素或者组件实例的情况下，他会体现出作用。
+
+### 20. 如何创建refs？
+
+有两种方法可以创建refs
+
+- 这是一个最近添加的方法， Refs用`React.createRef()`方法，然后直接在React的Elements上注册`ref`属性的方法。想要传递refs到组件当中，只需要在构造函数里赋值ref给实例即可
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props)
+    this.myRef = React.createRef()
+  }
+  render() {
+    return <div ref={this.myRef} />
+  }
+}
+```
+- 无论你使用哪个版本的React，你都可以使用Ref的回调方法。举例来说，如下方式访问搜索栏组件input elements
+```
+class SearchBar extends Component {
+   constructor(props) {
+      super(props);
+      this.txtSearch = null;
+      this.state = { term: '' };
+      this.setInputSearchRef = e => {
+         this.txtSearch = e;
+      }
+   }
+   onInputChange(event) {
+      this.setState({ term: this.txtSearch.value });
+   }
+   render() {
+      return (
+         <input
+            value={this.state.term}
+            onChange={this.onInputChange.bind(this)}
+            ref={this.setInputSearchRef} />
+      );
+   }
+}
+```
+- 你还可以使用`closures`在方法组件中使用refs.
+
+### 21. 什么是Forward Refs
+
+Ref 转发是一项功能，它允许某些组件获取它们接收到的 ref，并将其进一步传递给子组件。
+```
+const ButtonElement = React.forwardRef((props, ref) => (
+  <button ref={ref} className="CustomButton">
+    {props.children}
+  </button>
+));
+
+// Create ref to the DOM button:
+const ref = React.createRef();
+<ButtonElement ref={ref}>{'Forward Ref'}</ButtonElement>
+```
