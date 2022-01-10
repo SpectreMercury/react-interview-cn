@@ -489,3 +489,8 @@ class UserProfile extends React.Component {
   }
 }
 ```
+
+### 31. `createElement`和`cloneElement`的区别是什么？
+
+JSX的元素会被`React.createElement()`方法用来创建React元素来表现UI。然而`cloneElement`用来克隆一个element然后给他传递新的props
+
