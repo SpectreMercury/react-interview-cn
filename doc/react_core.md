@@ -357,3 +357,135 @@ const ButtonElement = React.forwardRef((props, ref) => (
 const ref = React.createRef();
 <ButtonElement ref={ref}>{'Forward Ref'}</ButtonElement>
 ```
+
+### 22.refs和findDOMNode()哪个是回调的首选项
+
+首选肯定是refs而不是findDOMNode(), 因为findDOMNode()阻碍了React在将来的一些更新和发展。
+
+传统的findDOMNode方法:
+```
+class MyComponent extends Component {
+  componentDidMount() {
+    findDOMNode(this).scrollIntoView()
+  }
+
+  render() {
+    return <div />
+  }
+}
+```
+推荐的使用方法
+```
+class MyComponent extends Component {
+  constructor(props){
+    super(props);
+    this.node = createRef();
+  }
+  componentDidMount() {
+    this.node.current.scrollIntoView();
+  }
+
+  render() {
+    return <div ref={this.node} />
+  }
+}
+```
+
+### 23.为什么说字符串的refs是传统的？
+
+如果你之前使用过React，你一定特别熟悉字符串API版本的`ref`, 像`ref={'textInput'}`, 可以使用`this.ref.textInput`访问DOM。我们不推荐使用这样的访问方式，考虑到传统的方式，它有以下的问题。字符串Ref在React v16中已经被移除了
+
+- 他们迫使React必须追踪当前执行的组件。这样是有问题的，他使react的模块有状态，这样当包里的模块重复时，他会产生奇怪的错误
+- 他不是可组合的 - 如果一个库传递一个ref到他的子组件，用户就不能传递其他的ref过去。回调的模式则可以做的完美的ref组合
+- 它不适用于像Flow那样的静态分析。Flow 无法猜测框架使字符串 ref 出现在 this.refs 上的魔法，以及它的类型（可能不同）。 回调引用对静态分析更友好。
+- 他不能像多数人期待的那样渲染回调的方式运行
+  ```
+  class MyComponent extends Component {
+    renderRow = (index) => {
+      // This won't work. Ref will get attached to DataTable rather than MyComponent:
+      return <input ref={'input-' + index} />;
+
+      // This would work though! Callback refs are awesome.
+      return <input ref={input => this['input-' + index] = input} />;
+    }
+
+    render() {
+      return <DataTable data={this.props.data} renderRow={this.renderRow} />
+    }
+  }
+  ```
+
+### 24. 什么是虚拟DOM？
+
+虚拟DOM是真是DOM在内存中的表示。UI的表示在内存当中，并与真实的DOM同步。这一步是UI在视觉上的表现保存在内存当中和展示元素在屏幕上的一步。这整个过程称之为一致性
+
+### 25.虚拟DOM是如何工作的？
+虚拟DOM的工作原理基本上分三步：
+
+- 无论什么时候下划线的数据发生改变，整个UI都会在虚拟DOM中重新渲染
+  ![vm-work](https://github.com/sudheerj/reactjs-interview-questions/raw/master/images/vdom1.png)
+
+- 计算当前DOM和新DOM的差异
+  ![vm-work](https://github.com/sudheerj/reactjs-interview-questions/raw/master/images/vdom2.png)
+
+- 计算结束后，更新真实的DOM，但是只有改变的部分会被更新
+  ![vm-work](https://github.com/sudheerj/reactjs-interview-questions/raw/master/images/vdom3.png)
+
+### 26. 影子DOM和虚拟DOM的区别
+
+影子DOM是浏览器的技术，主要解决Web组件中的范围变量和CSS。虚拟DOM则是Javascript库在浏览器API上的实现的一个概念。
+
+### 27. 什么是React Fiber架构?
+
+Fiber是React v16版本新协调引擎活核心算法的重构。React Fiber主要的目的是提高在动画，布局，手势，暂停，中止或者重用工作的能力以及为不同类型的更新分配优先级等领域的适用性。
+
+### 28. React Fiber的主要目的？
+
+除了26描述的内容外，React Fiber能够将渲染的工作分成块并将其分散到各个帧当中。从文档来看，主要目标有：
+
+- 能够在模块中分离中断的任务
+- 能够对现在进行的工作的优先级进行排序，重新定位和复用
+- 能够在父子组件之间进行让步来支持React的布局
+- 支持`render()函数返回多个元素`
+- 更好的支持边界错误
+
+### 29. 什么是可控制的组件
+
+一个组件控制用户在form表单的input元素中的操作叫作可控制组件，比如，每一个状态改变都有一个程序处理
+
+比如说，输入所有的名字转换为大写
+```
+handleChange(event) {
+  this.setState({value: event.target.value.toUpperCase()})
+}
+```
+
+### 30. 什么是非控制组件
+
+不受控制的组件就是组件内部自己存储组建的状态，你可以使用ref去查看dom当前的值，这点有点类似传统的HTML
+```
+class UserProfile extends React.Component {
+  constructor(props) {
+    super(props)
+    this.handleSubmit = this.handleSubmit.bind(this)
+    this.input = React.createRef()
+  }
+
+  handleSubmit(event) {
+    alert('A name was submitted: ' + this.input.current.value)
+    event.preventDefault()
+  }
+
+  render() {
+    return (
+      <form onSubmit={this.handleSubmit}>
+        <label>
+          {'Name:'}
+          <input type="text" ref={this.input} />
+        </label>
+        <input type="submit" value="Submit" />
+      </form>
+    );
+  }
+}
+```
