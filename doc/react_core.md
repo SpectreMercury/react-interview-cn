@@ -494,3 +494,204 @@ class UserProfile extends React.Component {
 
 JSX的元素会被`React.createElement()`方法用来创建React元素来表现UI。然而`cloneElement`用来克隆一个element然后给他传递新的props
 
+### 32. React中的状态提升是什么？
+
+如果多个组件需要共享同样的数据变化，那么这种情况下推荐提升他们的共享状态到他们最近的祖先组件当中。就是说，如果两个子组件从同一个父组件而来共享同样的状态变化，那就把状态放到父组件中区维护，而不是在两个子组件中都维护一份
+
+### 33. 组件的生命周期的区别
+
+组件的声明周期有三个显著的生命周期状态：
+
+- Mounting：组件已经准备好挂载在浏览器的DOM伤。这个阶段包括`constructor()`, `getDerivedStateFromProps()`,`render()`和`componentDidMount()`生命周期方法
+- Updating：在这个阶段，组件更新有两种方式，一种是有新的props传递，另一种是使用`setState()`或者`forUpdate()`更新组件中的状态。这个剪短覆盖了`getDerviedStateFromProps()`, `shouldComponentnUpdate()`, `render()`, `geSnapshotBeforeUpdate()`和`componentDidUpdate()`
+- Unmounting：在最后这个阶段，组件不再被需要，并且会从浏览器的DOM中取消挂在。这个阶段包含`componentWillUnmount()`生命周期方法
+
+值得注意的是，在更新DOM的时候，React内部包含一个阶段性的概念。它分为以下几点：
+- 渲染阶段，组件将会在没有任何副作用的时候渲染。这个阶段适用于pure component，在渲染阶段，她可以被暂停，抛弃或者重新渲染。
+- 预提交状态(Pre-commit)：在组件真正提交改变到真实DOM之前，在这个阶段允许React通过`getSnapShotBeforeUpdate()`去读取DOM
+- 提交改变 React通过与DOM合作，并分别执行生命周期的`componentDidMount()` 用于挂载，`componentDidUpdate()`用于更新，和`componentWillUnmount()`用于结束挂载
+  
+### 34. 什么是React中的声明周期？
+
+- getDerivedStateFromProps： 在调用`render()`之前调用并在每次渲染时调用。 这适用于需要派生状态的罕见用例。
+- componenntDidMount: 在第一次渲染之后执行，当所有的ajax请求，DOM或者状态更新和设置的事件监听都应该生效
+- shouldComponentUpdate： 决定组件是否更新。默认情况下，其返回true。如果使用者确认状态和props的改变不用重新渲染该组件，可以返回false。这是一个很好的提高性能的方法，当组件收到新的prop的时候，可以允许你阻止重新渲染
+- getSnapshotBeforeUpdate：在渲染输出到提交DOM之前执行，任何返回值都会被传递到`componenntDidUpdate()`。这对于从DOM捕获信息非常有用，比如（滚动）
+- componentDidUpdate：通常，这个用作回应DOM根据prop和state的变化。如果`shouldComponentUpdate()`返回`false`，则该周期方法不会触发
+- componentWillUnmount： 用来取消传出的网络请求或者移除与该组件相关的事件监听
+
+### 35. 什么是高阶组件？
+
+高阶组件是一个方法，他接收传入一个组件并返回一个新的组件。基本上他是源自React的一种组合特性。
+我们称之为pure component，因为他们接受任何动态提供的子组件，但是他们不会对输入的组件有任何输入或者复制的行为。
+```
+const EnhancedComponent = higherOrderComponent(WrappedComponent)
+```
+高阶组件可以用在一下场景中：
+
+- 代码复用，逻辑和引导抽象
+- 渲染劫持
+- 状态抽象和维护
+- Props维护
+
+### 36. 如何为高阶组件提供Props代理
+
+你可以用props代理的模式修改/添加传递给组件的props
+```
+function HOC(WrappedComponent) {
+  return class Test extends Component {
+    render() {
+      const newProps = {
+        title: 'New Header',
+        footer: false,
+        showFeatureX: false,
+        showFeatureY: true
+      }
+
+      return <WrappedComponent {...this.props} {...newProps} />
+    }
+  }
+}
+```
+
+### 37. 什么事context？
+
+Context提供了一种组件树之间传递数据的方法，同时还不用手动传递props。
+
+或者例如，经过身份验证的用户、区域设置偏好、UI 主题需要在应用程序中被许多组件访问。
+
+```
+const {Provider, Consumer} = React.createContext(defaultValue)
+```
+
+### 38. 什么事子props？
+
+子组件是prop(`this.props.children`)允许你像数据一样传递组件到其他组件，就像其他你使用的props一样。组件树会把组件开始和闭合标签之间的内容当做prop传递给子组件。
+
+有一系列的React API可以和这个prop配合使用。包括`React.Children.map`, `React.Children.count`, `React.Children.only`,`React.Children.toArray`。
+
+一个简单的children prop用例：
+```
+const MyDiv = React.createClass({
+  render: function() {
+    return <div>{this.props.children}</div>
+  }
+})
+
+ReactDOM.render(
+  <MyDiv>
+    <span>{'Hello'}</span>
+    <span>{'World'}</span>
+  </MyDiv>,
+  node
+)
+```
+
+### 39. 如何在React中写注释
+React/JSX 中的注释类似于 JavaScript 多行注释，但用花括号括起来。
+单行注释:
+```
+<div>
+  {/* Single-line comments(In vanilla JavaScript, the single-line comments are represented by double slash(//)) */}
+  {`Welcome ${user}, let's play React`}
+</div>
+```
+多行注释：
+```
+<div>
+  {/* Multi-line comments for more than
+   one line */}
+  {`Welcome ${user}, let's play React`}
+</div>
+```
+
+### 40. 在Constructor中使用super的目的？
+
+在调用`super()`方法之前，子组件无法使用`this.props`，这同样适用于ES6的子类。将props参数传递给super的主要目的是可以在子构造函数中访问使用`this.props`使用
+
+传递Props：
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props)
+
+    console.log(this.props) // prints { name: 'John', age: 42 }
+  }
+}
+```
+不使用props：
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super()
+
+    console.log(this.props) // prints undefined
+
+    // but props parameter is still available
+    console.log(props) // prints { name: 'John', age: 42 }
+  }
+
+  render() {
+    // no difference outside constructor
+    console.log(this.props) // prints { name: 'John', age: 42 }
+  }
+}
+```
+只是在constructor中不同，在constructor外面是一样的
+
+### 41. 什么是一致性？
+
+当组件的 props 或 state 发生变化时，React 通过比较新返回的元素和之前渲染的元素来决定是否需要进行实际的 DOM 更新。 当它们不相等时，React 将更新 DOM。 这个过程称为一致性。
+
+### 42. 如何为state设置一个动态的key名
+
+如果你在用ES6或者Babel转译JSX代码的话，你可以用计算属性名来完成这个需求
+
+```
+handleInputChange(event) {
+  this.setState({ [event.target.id]: event.target.value })
+}
+```
+
+### 43. React中常见的方法调用错误是什么？
+
+```
+render() {
+  // Wrong: handleClick is called instead of passed as a reference!
+  return <button onClick={this.handleClick()}>{'Click Me'}</button>
+}
+```
+```
+render() {
+  // Correct: handleClick is passed as a reference!
+  return <button onClick={this.handleClick}>{'Click Me'}</button>
+}
+```
+### 44. 惰性函数是否支持命名导出
+
+目前`React.lazy`函数只支持默认导出。如果你命名导出，你可以创建一个中间模块，将其导出为默认模块。它确保tree shaking继续工作不会拉取其他未使用的组件。
+我们来看一下一次导出多个命名组件：
+```
+// MoreComponents.js
+export const SomeComponent = /* ... */;
+export const UnusedComponent = /* ... */;
+```
+
+在中间文件`IntermediateComponent.js`中重新导出`MoreComponents.js`组件
+```
+// IntermediateComponent.js
+export { SomeComponent as default } from "./MoreComponents.js";
+```
+然后你就可以用下面的方法引入惰性函数
+```
+import React, { lazy } from 'react';
+const SomeComponent = lazy(() => import("./IntermediateComponent.js"));
+```
+
+### 45. 为什么React使用className来替代class属性？
+class是Javascript关键词，而且JSX是Javascript的一个扩展。这是为什么React使用className替代class的根本原。像一个prop一样传递className
+```
+render() {
+  return <span className={'menu navigation-menu'}>{'Menu'}</span>
+}
+```
