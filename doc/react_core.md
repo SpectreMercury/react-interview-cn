@@ -695,3 +695,258 @@ render() {
   return <span className={'menu navigation-menu'}>{'Menu'}</span>
 }
 ```
+
+### 46. 什么是React的Fragments？
+
+这是React中组件返回多个Elements的常用模式。Fragments让你可以直接返回一串子组件，不需要添加额外的DOM。
+
+```
+render() {
+  return (
+    <React.Fragment>
+      <ChildA />
+      <ChildB />
+      <ChildC />
+    </React.Fragment>
+  )
+}
+```
+这是一个短版，但是有很多工具中不支持这样
+```
+render() {
+  return (
+    <>
+      <ChildA />
+      <ChildB />
+      <ChildC />
+    </>
+  )
+}
+```
+### 47. 为什么fragment比container DOM更好？
+
+- Fragments的速度和内存占用上都比额外创建一个DOM要更快更小一点。但是这个又是只有在一个很深很大的DOM树上，才能真正体现出他的优势。
+- 一些css的机制类似flex和Grid布局，有一个非常特殊的父子关系，如果添加一个中间的div的话，会让他们的布局变得麻烦
+- DOM看起来不那么杂乱
+
+### 48. 什么是React中Portals？
+
+React Portal 是一种优秀的方法，可以将子组件渲染到由组件树层次结构定义的父 DOM 层次结构之外的 DOM 节点中。Portal 的最常见用例是子组件需要从视觉上脱离父容器的情况。
+可以使用 ReactDOM.createPortal(child, container)创建一个 Portal。这里的 child 是一个 React 元素、片段或字符串，而 container 是 Portal 应该注入到的 DOM 位置（节点）。
+
+```
+const Modal =({ message, isOpen, onClose, children })=> {
+  if (!isOpen) return null
+  return ReactDOM.createPortal(    
+    <div className="modal">
+      <span className="message">{message}</span>
+      <button onClick={onClose}>Close</button>
+    </div>,
+    domNode)
+}
+```
+*我们为什么需要他？*
+
+当我们在特定元素（父组件）中使用模态时，模态的高度和宽度将从模态所在的组件继承。因此，模态可能会被裁剪，而无法在应用程序中正确显示。传统上模态需要 CSS 属性，如 overflow:hidden 和 z-index，以避免出现这一问题。
+
+### 49. 什么是无状态组件?
+
+如果行为完全独立于自己的状态，可以被称作一个无状态组件。你可以使用function或者ES6 Class的方式来创建无状态组件。除非你需要使用到生命周期中的勾子函数，其他情况推荐使用function来创建组件。使用function来创建无状态组件有以下好处：
+
+- 非让容易去coding，理解和测试
+- 速度较快
+- 可以避免使用`this`关键字
+
+### 50. 什么是有状态组件？
+
+如果一个组件行为依赖一个组件的状态，那么它被称作一个状态组件。这是组件通常被ES6的Class来实现，并且组件的状态在`constructor()`中被初始化。
+
+```
+class App extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { count: 0 }
+  }
+
+  render() {
+    // ...
+  }
+}
+```
+
+React 16.8的更新后，你可以使用hooks。hooks使用你可以初始化state无需使用classes的方法
+这和上面的方法是一样的
+```
+ import React, {useState} from 'react';
+
+ const App = (props) => {
+   const [count, setCount] = useState(0);
+
+   return (
+     // JSX
+   )
+ }
+```
+
+### 51. 如何对props做类型校验？
+
+当应用部署在开发环境的时候，React会自动检查所有我们设置在组件上的props来确保他的格式正确。如果格式不正确的话，React会返回warning的信息在console当中。 为了能够有更好的表现他在生产环境中被禁止，你可以使用`isRequired`来强制检查。
+
+预定义的prop 类型如下：
+
+- `PropTypes.number`
+- `PropTypes.string`
+- `PropTypes.array`
+- `PropTypes.object`
+- `PropTypes.func`
+- `PropTypes.node`
+- `PropTypes.element`
+- `PropTypes.bool`
+- `PropTypes.any`
+
+我们可以用以下方式来创建`User`组件：
+```
+import React from 'react'
+import PropTypes from 'prop-types'
+
+class User extends React.Component {
+  static propTypes = {
+    name: PropTypes.string.isRequired,
+    age: PropTypes.number.isRequired
+  }
+
+  render() {
+    return (
+      <>
+        <h1>{`Welcome, ${this.props.name}`}</h1>
+        <h2>{`Age, ${this.props.age}`}</h2>
+      </>
+    )
+  }
+}
+```
+注意：在React V15.5中，他被移动到了prop-type库中
+
+等价的Function创建组件
+
+```
+import React from 'react'
+import PropTypes from 'prop-types'
+
+function User({name, age}) {
+  return (
+    <>
+      <h1>{`Welcome, ${name}`}</h1>
+      <h2>{`Age, ${age}`}</h2>
+    </>
+  )
+}
+
+User.propTypes = {
+    name: PropTypes.string.isRequired,
+    age: PropTypes.number.isRequired
+  }
+
+```
+
+### 52. React的优势？
+
+React的主要优势如下：
+
+- 使用虚拟DOM来提升应用的表现
+- JSX让代码易读易写
+- 他在服务端和客户端同时渲染
+- 易于和其他框架整合
+- 容易去书写单元测试
+
+### 53. React的局限性有哪些
+
+这些是React的主要局限性：
+
+- 对web新手来说学习曲线较高
+- React只是一个库，而不会一个完整的框架
+- React兼容传统的MVC需要一系列的配置
+- 太多的小组件会导致框架被过度设计
+- 内联代码和JSX会增加代码的复杂性
+
+### 54. 什么是React 16中的边界错误？
+
+错误边界是组件在子组件树的任何位置捕获，记录这些错误，同时展示后备UI而不是崩溃组件树的组件。
+如果一个组件在生命周期里定义了`componentDidCatch(error, info)`或者`static getDerivedStateFromError()`方法， 那么他就会称为错误边界。
+
+```
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  componentDidCatch(error, info) {
+    // You can also log the error to an error reporting service
+    logErrorToMyService(error, info)
+  }
+
+  static getDerivedStateFromError(error) {
+     // Update state so the next render will show the fallback UI.
+     return { hasError: true };
+   }
+
+  render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return <h1>{'Something went wrong.'}</h1>
+    }
+    return this.props.children
+  }
+}
+```
+之后像使用一个常用的组件一样使用
+```
+<ErrorBoundary>
+  <MyWidget />
+</ErrorBoundary>
+```
+
+### 55. 在React 15中如何处理错误边界问题？
+
+React 15使用`unstable_handleError`提供了非常基础的错误边界支持。他在React 16中被更名为`componentDidCatch`。
+
+### 56. 有没有什么推荐的静态类型检查方法？
+
+通常我们使用`PropTypes`来做React应用的类型检查。在较大的项目中，我们推荐使用FLow或者Typescript来进行类型检查。
+
+### 57. React-dom包的作用
+
+`React-DOM`包提供了特定的DOM方法，可以被应用在你app的顶层。大多数组件不需要使用该模块。有一些方法存在在这个包中：
+- `render()`
+- `hydrate()`
+- `unmountComponentAtNode()`
+- `findDOMNode()`
+- `createPortal()`
+
+### 58. 渲染`react-dom`的目的
+
+这个方法用于在提供的container的DOM中插入React元素，同时返回这个组件。如果这个组件之前在container中渲染过，他将触发更新，并且仅根据需要更改 DOM 以反映最新更改。
+`ReactDOM.render(element, container[, callback])`
+callback非必选项，如果调用方提供了callback选项，那么他将会在更新后被执行。
+
+### 59. 什么React DOMServer？
+`ReactDOMServer`对象允许在渲染时对组件进行惊天标记（通常使用Node Server）对象主要被用在SSR这种。下面的方法可以在服务器环境和浏览器环境中都适用：
+- renderToString()
+- renderToStaticMarkup()
+举例来说，你启动了一个基于Node的服务，像Express，Hapi或者koa等，你可以调用`renderToString()`来以字符串格式渲染你根部组件，然后将其作为响应发送
+
+### 60. 如何在React中使用innerHTML？
+
+`dangerouslySetInnerHTML`属性是React用来替代使用`innerHTML`在浏览器中使用DOM。就像`innerHTML`, 考虑到XSS攻击问题，使用此属性是有风险的。你只需要传递一个对象`__html`作为key而HTML文本作为value。
+
+这个例子是`MyComponent`使用`dangerousSetInnerHTML`设置HTML标记
+```
+function createMarkup() {
+  return { __html: 'First &middot; Second' }
+}
+
+function MyComponent() {
+  return <div dangerouslySetInnerHTML={createMarkup()} />
+}
+```
