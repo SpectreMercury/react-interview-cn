@@ -950,3 +950,254 @@ function MyComponent() {
   return <div dangerouslySetInnerHTML={createMarkup()} />
 }
 ```
+
+### 61. 如何在React中使用样式
+
+`style`属性接受Javascript对象，属性名使用驼峰属性命名而不是css字符串。他延续了DOM的样式风格和Javscript的属性， 更高效的同时，也组织了XSS注入的安全问题。
+```
+const divStyle = {
+  color: 'blue',
+  backgroundImage: 'url(' + imgUrl + ')'
+};
+
+function HelloWorldComponent() {
+  return <div style={divStyle}>Hello World!</div>
+}
+```
+`style` key使用驼峰的命名方式，是为了延续Javascirpt访问DOM节点属性的方式（e.g.: node.style.backgroundImage)
+
+### 62. 事件在React上有什么不同？
+
+React的事件处理上有一些句法的区别：
+
+- React的事件处理使用驼峰命名
+- JSX中你传递一个方法到事件处理，而不是一个字符串
+
+### 63. 如果你在`constructor`中使用`setState()`会发生什么？
+
+当时你使用`setState()`，除了分配状态给对象外，他还会重新渲染组件及其所有子组件。你还会看到错误报警，像你只可以在已经挂载或者正在挂载的组件中更新状态。所以我们需要在`constructor()`中使用`this.state`来初始化变量。
+
+### 64. 用index当key的影响是什么？
+
+Key应该是稳定的，可预测和唯一的，所以React可以追踪所有的元素。 在下面这段代码片段中，元素将根据排序作为key，而不是与所表现的数据关联。这限制了React的性能优化。
+```
+{todos.map((todo, index) =>
+  <Todo
+    {...todo}
+    key={index}
+  />
+)}
+```
+如果你用元素的数据作为唯一key，假设这个id在list当中唯一且稳定。React可以不用重新评估他们就可以排序这个元素。
+
+```
+{todos.map((todo) =>
+  <Todo {...todo}
+    key={todo.id} />
+)}
+```
+
+### 65. 在`componentWillMount()`中使用`setState()`好吗？
+
+是的，在`componentWillMount()`中使用`setState()`是安全的。但是，同时我们建议避免在生命周期勾子`componentWillMount()`中异步初始化。`componentWillMount()`会在挂载行为发生时立刻调用。他的调用时机早于`render()`，所以设置状态的方法不会出发重新渲染。 避免在此方法中引用任何副作用或者订阅。我们需要确定所有的异步初始化发生在`componentDidMount()`而不是`componentWillMount()`
+
+```
+componentDidMount() {
+  axios.get(`api/todos`)
+    .then((result) => {
+      this.setState({
+        messages: [...result.data]
+      })
+    })
+}
+```
+
+### 66. 如果你在在初始化状态的时候使用props会发生什么？
+
+如果在组件乜有发生刷新的情况下props发生了改变，新的prop内容不会被展现，因为constructor方法不会更新组件当前的状态。props初始化的状态只有在组件创建的时候才会被执行。
+
+下面的组件不会展示更新的输入状态
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      records: [],
+      inputValue: this.props.inputValue
+    };
+  }
+
+  render() {
+    return <div>{this.state.inputValue}</div>
+  }
+}
+
+```
+直接在方法当中应用则会更新数值
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      record: []
+    }
+  }
+
+  render() {
+    return <div>{this.props.inputValue}</div>
+  }
+}
+```
+
+### 67. 如何有条件的渲染组件？
+
+在有些情况下，你想在不同情况加不同组件。JSX不渲染false或者undefine的情况，所以你可以使用简短的条件限定，只在给出条件为真的情况下渲染
+
+```
+const MyComponent = ({ name, address }) => (
+  <div>
+    <h2>{name}</h2>
+    {address &&
+      <p>{address}</p>
+    }
+  </div>
+)
+```
+如果你想使用`if-else`，你可以使用三元表达式
+```
+const MyComponent = ({ name, address }) => (
+  <div>
+    <h2>{name}</h2>
+    {address
+      ? <p>{address}</p>
+      : <p>{'Address is not available'}</p>
+    }
+  </div>
+)
+```
+
+### 68. 为什么注意直接在DOM上进行props传递？
+
+当我们传递props的时候，会经历向HTML上添加未知的属性的风险，这是一个错误的做法。我们使用`...rest`操作来对prop进行解构，这样他只会添加需要的props。
+举例来说：
+```
+const ComponentA = () =>
+  <ComponentB isDisplay={true} className={'componentStyle'} />
+
+const ComponentB = ({ isDisplay, ...domProps }) =>
+  <div {...domProps}>{'ComponentB'}</div>
+```
+
+### 69. 如何在React中使用装饰符？
+
+你可以装饰你的class组件，这和像一个function中传递一个组件是一样的。装饰符是修改组件功能的灵活切易读的方式。
+```
+@setTitle('Profile')
+class Profile extends React.Component {
+    //....
+}
+
+/*
+  title is a string that will be set as a document title
+  WrappedComponent is what our decorator will receive when
+  put directly above a component class as seen in the example above
+*/
+const setTitle = (title) => (WrappedComponent) => {
+  return class extends React.Component {
+    componentDidMount() {
+      document.title = title
+    }
+
+    render() {
+      return <WrappedComponent {...this.props} />
+    }
+  }
+}
+```
+
+### 70. 如何memoization一个组件
+
+有一些memoization化的库可以应用在function components上
+
+举例来说`moize`库可以memoization化一个组件在其他组件中
+
+```
+import moize from 'moize'
+import Component from './components/Component' // this module exports a non-memoized component
+
+const MemoizedFoo = moize.react(Component)
+
+const Consumer = () => {
+  <div>
+    {'I will memoize the following entry:'}
+    <MemoizedFoo/>
+  </div>
+}
+```
+注意：从React v16.6开始，我们拥有了一个API `React.memo`。它提供一个高阶组件可以memoization组件，除非props发生改变。使用这个方法，只需要简单的在component外层用`React.memo`包裹就可以
+```
+ const MemoComponent = React.memo(function MemoComponent(props) {
+    /* render using props */
+  });
+  OR
+  export default React.memo(MyFunctionComponent);
+```
+
+### 71. 你如何进行服务端你渲染？
+
+React已经准备好了处理NodeJS的服务端渲染。一个特殊的DOM渲染版本已经可用，他的模式和客户端渲染是相同的。
+```
+import ReactDOMServer from 'react-dom/server'
+import App from './App'
+
+ReactDOMServer.renderToString(<App />)
+```
+这个方法会像字符串以严格输出传荣的HTML。他可以作为一个服务器响应放在一个页面的body中。在客户端上，React会检测到预渲染的内容，并无缝的从终端的地方继续渲染。
+
+### 72. React如何使用production（生产）环境？
+
+您应该使用 Webpack 的 DefinePlugin 方法将 NODE_ENV 设置为生产环境，从而去除诸如 propType 验证和额外警告之类的内容。 除此之外，如果你缩小代码，例如，Uglify 的死代码消除以去除仅开发代码和注释，它将大大减少你的包的大小。
+
+### 73. CRA是什么和他的优势？
+
+`create-react-app` CLI工具可以帮你无配置过程的创建和运行React项目
+我们来使用CRA创建一个TODO App
+```
+# Installation
+$ npm install -g create-react-app
+
+# Create new project
+$ create-react-app todo-app
+$ cd todo-app
+
+# Build, test and run
+$ npm run build
+$ npm run test
+$ npm start
+```
+这里面包含了你来创建一个React App的所有事情
+- React，JSX, ES6和FLOW的语法支持
+- ES6之外的语言扩展，如对象扩展运算符
+- 自适应的CSS
+- 一个快速的交互式单元测试运行器，内置对覆盖率报告的支持。
+- 一个实时的开发环境错误报警服务器
+- 一个基于hash和sourcemap的JS,CSS，图片生产环境打包脚本
+
+### 74. 生命周期mounting安装的方法顺序是什么？
+
+当一个组件实例正在被创建和插入到DOM当中时候，生命周期的防范按照下面的顺序进行调用
+- `constructor()`
+- `static getDerivedStateFromProps()`
+- `render()`
+- `componentDidMount()`
+
+### 75. React v16中将要溢出的生命周期方法有哪些
+
+下面生命周期方法可能会造成不安全的代码使用并制造了很多异步渲染的问题
+
+- `componentWillMount()`
+- `componentWillReceiveProps()`
+- `componentWillUpdate()`
+
