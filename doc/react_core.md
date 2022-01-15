@@ -1193,7 +1193,7 @@ $ npm start
 - `render()`
 - `componentDidMount()`
 
-### 75. React v16中将要溢出的生命周期方法有哪些
+### 75. React v16中将要移除的生命周期方法有哪些
 
 下面生命周期方法可能会造成不安全的代码使用并制造了很多异步渲染的问题
 
@@ -1201,3 +1201,375 @@ $ npm start
 - `componentWillReceiveProps()`
 - `componentWillUpdate()`
 
+### ***76. 生命周期方法`getDerivedStateFromProps()`创建的目的是什么？***
+
+新的静态生命周期方法`getDerivedStateFromProps()`会在组件实例化也就是组件还没有被重新渲染的时候执行。他会返回一个对象来更新状态，或者说返回`null`声明新的props不需要任何的更新。
+
+```
+class MyComponent extends React.Component {
+  static getDerivedStateFromProps(props, state) {
+    // ...
+  }
+}
+```
+
+### ***77. 生命周期方法`getSnapshotBeforeUpdate()`创建的目的是什么？*** ###
+
+这个方法`getSnapshotBeforeUpdate()`在DOM更新之前执行。这个方法的返回值会被当做第三个参数传递给方法`componentDidUpdate()`
+```
+class MyComponent extends React.Component {
+  getSnapshotBeforeUpdate(prevProps, prevState) {
+    // ...
+  }
+}
+```
+生命周期中`componentDidUpdate()`覆盖了方法`componentWillUpdate()`的所用用例。
+
+### ***78. Hooks取代了render props和高阶组件嘛？*** ### 
+
+Render Props和高阶组件都只渲染一个子节点，但是大多数情况下Hooks是一个提供减少你树嵌套服务的更简单的方式。
+
+### ***79. 组件推荐的命名方式*** ###
+
+推荐使用索引而不是displayName来命名组件
+用`displayName`来命名组件
+```
+export default React.createClass({
+  displayName: 'TodoApp',
+  // ...
+})
+```
+推荐的方式：
+```
+export default class TodoApp extends React.Component {
+  // ...
+}
+```
+
+### ***80. 在Component中推荐的方法顺序是什么样的*** ###
+
+- `static`方法
+- `constructor()`
+- `getChildContext()`
+- `componentWillMount()`
+- `componentDidMount()`
+- `componentWillReceiveProps()`
+- `shouldComponentUpdate()`
+- `componentWillUpdate()`
+- `componentDidUpdate()`
+- `componentWillUnmount()`
+- 事件处理方法
+- 内容获取方法像`getSelectReason()`
+- 条件渲染方法`renderNavigation()`或者`renderProfilePicture()`
+
+### ***81. 什么是Switching Component*** ###
+
+Switching Component是指从多个组件中渲染其中的一个，我们需要维护一个map来管理这些组件的props
+
+举例来说，一个switching component基于page属性展现不同的页面
+
+```
+import HomePage from './HomePage'
+import AboutPage from './AboutPage'
+import ServicesPage from './ServicesPage'
+import ContactPage from './ContactPage'
+
+const PAGES = {
+  home: HomePage,
+  about: AboutPage,
+  services: ServicesPage,
+  contact: ContactPage
+}
+
+const Page = (props) => {
+  const Handler = PAGES[props.page] || ContactPage
+
+  return <Handler {...props} />
+}
+
+// The keys of the PAGES object can be used in the prop types to catch dev-time errors.
+Page.propTypes = {
+  page: PropTypes.oneOf(Object.keys(PAGES)).isRequired
+}
+```
+
+### ***82. 我们为什么需要像setState()中传递一个方法*** ###
+
+这个原因是，`setState()`是一个异步方法。React中批量state更新时，为了渲染表现，组件的状态有时候并不是`setState()`调用后立刻发生改变的。这意味着你不能在调用`setState()`就依赖state现在的数据，因为你不知道什么时候这个数据会更新。解决方法就是传递一个方法到`setState()`中，把之前的状态当做一个参数。这样可以避免你在使用state方法中，获取到旧的未更新数据。
+
+我们来看一个例子，初始化的count是0，经过连续3次的增加操作，每次只增加1.
+```
+// assuming this.state.count === 0
+this.setState({ count: this.state.count + 1 })
+this.setState({ count: this.state.count + 1 })
+this.setState({ count: this.state.count + 1 })
+// this.state.count === 0, not 3
+```
+如果我们是像`setState()`中传入一个方法，那么counts则会增长正确。
+
+```
+this.setState((preState, props) => {
+  count: prevState.counter + props.increment
+})
+```
+
+### ***83. 什么是React中的严格模式(Strict Mode)*** ###
+
+`React.StrictMode`是一个用来在应用中，帮我们发现潜在错误的组件。就像`<Fragment>`, `<StrictMode>`不会渲染额外的DOM。他会对当前和当前的子孙组件进行检查。而且该检查模式只在`development`模式下生效。
+
+```
+import React from 'react'
+
+function ExampleApplication() {
+  return (
+    <div>
+      <Header />
+      <React.StrictMode>
+        <div>
+          <ComponentOne />
+          <ComponentTwo />
+        </div>
+      </React.StrictMode>
+      <Header />
+    </div>
+  )
+}
+```
+在上面这个例子中，严格模式(strict mode)只检查`ComponentOne`和`ComponentTwo`两个组价
+
+### ***84. 什么是React Mixins*** ###
+
+Mixins已经废弃（引入一个公共组件，抽象其生命周期的方法达到抽象公共方法提供不同模块使用的目的），现在可以用hooks或者高阶组件替代。
+
+### ***85. 为什么`isMounted()`是反模式，什么是合理的解决方法？*** ###
+
+`isMounted()`创建最初的想法是当一个组件不再挂载的时候避免继续调用`setState()`，因为这样的操作会发出一个warning
+
+```
+if (this.isMounted()) {
+  this.setState({...})
+}
+```
+在`setState()`之前检查`isMounted()`是可以避免warning的情况，但这违背的警告的目的。使用`isMounted()`是一种代码异味，因为你使用这个方法的唯一原因就是你认为组件在解除挂在后仍然在被引用。
+
+一个有效的解决方案是，检查哪个地方在组件解除挂载后仍在持续调用`setState()`。这种情况出现通常出现在回调当中，当一个组件在等待数据返回的时候，在数据返回之前，组件就已经解除挂载。理想状态下，所有的回调应该在`componentWillUnmount()`中，优先于`unmounting`。
+
+### ***86. React支持哪些Pointer事件？*** ###
+
+Pointer 事件提供了一个统一的方式来处理这些输入事件。在过去我们有鼠标事件，各自的事件回调去处理各自的方法。今天，我们有很多设备没有鼠标，像手机或者pad使用点击或者笔的触屏方式。我们需要记住这些事件只在浏览器中有效。
+
+下面的事件现在在React DOM中有效
+- `onPointerDown`
+- `onPointerMove`
+- `onPointerUp`
+- `onPointerCancel`
+- `onGotPointerCapture`
+- `onLostPointerCapture`
+- `onPointerEnter`
+- `onPointerLeave`
+- `onPointerOver`
+- `onPointerOut`
+
+### ***87. 为什么组件名的首字母要大写？*** ###
+
+如果你在用JSX生成你的组件，那么你的组件首字母需要用大写字母。否则React会抛出一个错误。这个惯例应用的原因是，只有HTML和svg标签的首字母是小写。
+```
+class SomeComponent extends Component {
+ // Code goes here
+}
+```
+你可以定义一个首字母为小写的的组件，但是在引用的时候，他的首字母需要是大写的。这里小写是可以的
+```
+class myComponent extends Component {
+  render() {
+    return <div />
+  }
+}
+export default myComponent
+```
+当引用的时候，他的首字母需要是大写
+```
+import MyComponent from './MyComponent'
+```
+
+***React组件命名有哪些例外？***
+##### 组件的命名首字母应该是大写，但是有一些例外，带`.`的小写标签名也被认为是有效的。举例来说，下面的例子可以被打包成一个有效的组件
+
+```
+  render() {
+      return (
+        <obj.component/> // `React.createElement(obj.component)`
+      )
+}
+```
+
+### ***88. 自定义的标签属性在React V16中还支持嘛？*** ###
+是的，在过去，React会忽略未知的DOM属性标签，如果你使用JSX添加了一个属性但是React没有识别，React会直接跳过这个属性，举例来说：
+```
+<div mycustomattribute={'something'} />
+```
+这在React v15中会渲染一个空的标签
+```
+<div />
+```
+在React v16中，未知标签将会呈现一下结果：
+```
+<div mycustomattribute='something' />
+```
+这对浏览器的非常规标签非常有帮助，尝试新的DOM API, 以及集成第三方的库非常有帮助
+
+### ***89. `constructor()` 和`getInitialState()`的区别是什么*** ###
+
+在你使用ES6 classes，`getInitialState()`方法和`React.createClass()`的时候，你需要在constructor中初始化状态。
+
+使用ES6 Classes：
+```
+class MyComponent extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { /* initial state */ }
+  }
+}
+```
+使用`React.createClass()`
+```
+const MyComponent = React.createClass({
+  getInitialState() {
+    return { /* initial state */ }
+  }
+})
+```
+注意：CreateClass在React 16中已经被移除。
+
+### ***90.可以不调动`setState()`的情况下强制一个组件刷新嘛？*** ###
+
+一般情况下React的组件会在state或者props发生变的话的时候重新渲染，如果你的`render()`方法依赖其他数据，你可以使用`forceUpdate()`告诉React什么时候重新渲染组件。
+```
+component.forceUpdate(callback)
+```
+但是不建议使用`forceUpdate()`, 尽量将组件的数据都维护在state和props中
+
+### ***91. ES6中，super()和super(props)的区别是什么？*** ###
+
+`super()`直接调用不能在`constructor()`中使用`this.props`，但是使用`super(props)`可以。
+
+### ***92. JSX中如何循环*** ###
+
+你可以直接使用ES6的箭头函数，使用`Array.prototype.map`
+举例来说：
+```
+<tbody>
+  {items.map(item => <SomeComponent key={item.id} name={item.name} />)}
+</tbody>
+```
+但是你不能使用for来循环：
+```
+<tbody>
+  for (let i = 0; i < items.length; i++) {
+    <SomeComponent key={items[i].id} name={items[i].name} />
+  }
+</tbody>
+```
+这是因为 JSX 标签被转译为函数调用，并且您不能在表达式中使用语句。由于第 1 阶段提案的 do 表达式，这可能会改变。
+
+### ***93.你如何在属性中访问props*** ###
+
+React和JSX不支持属性插值，下面这样的代码不会生效
+```HTML
+<img className='image' src='images/{this.props.image}' />
+```
+但是您可以将任何 JS 表达式放在大括号内作为整个属性值。 所以下面的表达式有效：
+```HTML	
+<img className='image' src={'images/' + this.props.image} />
+```
+用模板语句也同样有效:
+```HTML
+<img className='image' src={`images/${this.props.image}`} />
+```
+
+### ***94.React的数组的prototype的shape*** ###
+
+如果你想向一个组件中传递一个特殊shape的数组则使用`React.ProtoTypes.shape()`当做一个参数传入到`React.ProtoTypes.arrayOf()`
+```JavaScript	
+ReactComponent.propTypes = {
+  arrayWithShape: React.PropTypes.arrayOf(React.PropTypes.shape({
+    color: React.PropTypes.string.isRequired,
+    fontSize: React.PropTypes.number.isRequired
+  })).isRequired
+}
+```
+### ***95. 如何根据条件添加DOM属性*** ###
+
+你不应该用引号讲其包裹起来，因为这样它会被当做一个字符串处理
+
+```HTML	
+<div className="btn-panel {this.props.visible ? 'show' : 'hidden'}">
+```
+
+你应该将大括号移动到最外面
+```HTML
+<div className={'btn-panel ' + (this.props.visible ? 'show' : 'hidden')}>
+```
+模板语句同样生效
+```HTML
+<div className={`btn-panel ${this.props.visible ? 'show' : 'hidden'}`}>
+```
+
+### ***96. React和React DOM的区别*** ###
+`React`的包中，包含了`React.createElements()`, `React.Component`, `React.children`和其他与元素或组件相关的类。你可以认为这些是同构或者创建组件的万能帮手。而在`React-dom`中，其包含`ReactDOM.render()`, 而且在`react-dom/server`中，我们有Server side render(SSR)来支持`ReactDOMServer.renderToString()`和`ReactDOMServer.renderToStaticMarkup()`。
+
+### ***97.为什么React DOM从React中分离出来？*** ###
+
+这样React做的事情与DOM无关，为React.Native等合作铺路。
+
+### ***98. 如何使用React的标签元素*** ###
+
+如果您尝试使用标准 for 属性呈现绑定到文本输入的 `<label>` 元素，则会生成缺少该属性的 HTML 并向控制台打印警告。
+
+```html
+<label for={'user'}>{'User'}</label>
+<input type={'text'} id={'user'} />
+```
+因为`for`是一个默认字段，这里我们用htmlFor来替代
+```html
+<label htmlFor={'user'}>{'User'}</label>
+<input type={'text'} id={'user'} />
+```
+
+### ***99. 如何在一行里合并样式对象*** ###
+
+你可以在React中使用使用扩展运算符
+```html
+ <button style={{...styles.panel.button, ...styles.panel.submitButton}}>{'Submit'}</button>
+```
+
+### ***100. 如何在窗口大小发生改变的时候重新渲染组件*** ### 
+在`componentDidMounted()`中监听resize事件，并移除`componentWillUpadted()`方法
+```javascript
+class WindowDimensions extends React.Component {
+  constructor(props){
+    super(props);
+    this.updateDimensions = this.updateDimensions.bind(this);
+  }
+   
+  componentWillMount() {
+    this.updateDimensions()
+  }
+
+  componentDidMount() {
+    window.addEventListener('resize', this.updateDimensions)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.updateDimensions)
+  }
+
+  updateDimensions() {
+    this.setState({width: window.innerWidth, height: window.innerHeight})
+  }
+
+  render() {
+    return <span>{this.state.width} x {this.state.height}</span>
+  }
+}
+```
