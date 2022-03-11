@@ -83,7 +83,7 @@ const Button = ({ onLogin }) => React.createElement(
   ```
 
 
-### 6. 什么时候用Class Component 什么时候用Function Componentn？
+### 6. 什么时候用Class Component 什么时候用Function Component？
 
 如果你要创建的Component需要State或者生命周期，则用Class Component，其他时候用Function Component。 但是从React 16.8增加了Hook之后，你可以在Function Components中使用state，生命周期的方法和其他功能
 
